@@ -1,0 +1,42 @@
+```shell
+limactl start --name=k3s k3s-demos.yaml --tty=false
+```
+
+```shell
+docker run -d --name=postgresql \
+  --env-file=psql.env \
+  -p 5432:5432 \
+  docker.io/postgres:14-alpine3.15
+```
+
+Kubernetes
+----------
+
+Deploy Postgresql
+
+```
+helm upgrade --install postgresql --values postgresql-values.yaml
+```
+
+Deploy Application(pingpong)
+
+```
+ko apply -f configs/pingpong
+```
+
+Deploy Application(dbpingpong)
+
+```
+ko apply -f configs/dbpingpong
+```
+
+
+```
+mutation {
+  createUser(input:{
+    name: "guruji"
+  }){
+    name
+  }
+}
+```
