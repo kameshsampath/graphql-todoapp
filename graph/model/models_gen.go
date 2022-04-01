@@ -10,51 +10,51 @@ import (
 
 type NewTodo struct {
 	Text   string `json:"text"`
-	UserID string `json:"userId"`
+	UserID int    `json:"userId"`
 }
 
 type NewUser struct {
-	Name string `json:"name"`
-	Sex  Sex    `json:"sex"`
+	Name   string `json:"name"`
+	Gender Gender `json:"gender"`
 }
 
-type Sex string
+type Gender string
 
 const (
-	SexMale   Sex = "MALE"
-	SexFemale Sex = "FEMALE"
+	GenderMale   Gender = "MALE"
+	GenderFemale Gender = "FEMALE"
 )
 
-var AllSex = []Sex{
-	SexMale,
-	SexFemale,
+var AllGender = []Gender{
+	GenderMale,
+	GenderFemale,
 }
 
-func (e Sex) IsValid() bool {
+func (e Gender) IsValid() bool {
 	switch e {
-	case SexMale, SexFemale:
+	case GenderMale, GenderFemale:
 		return true
 	}
 	return false
 }
 
-func (e Sex) String() string {
+func (e Gender) String() string {
 	return string(e)
 }
 
-func (e *Sex) UnmarshalGQL(v interface{}) error {
+func (e *Gender) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = Sex(str)
+	*e = Gender(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Sex", str)
+		return fmt.Errorf("%s is not a valid Gender", str)
 	}
 	return nil
 }
 
-func (e Sex) MarshalGQL(w io.Writer) {
+func (e Gender) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

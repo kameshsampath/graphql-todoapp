@@ -5,9 +5,7 @@ package graph
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"fmt"
+	"strconv"
 
 	"github.com/kameshsampath/blogapp/graph/generated"
 	"github.com/kameshsampath/blogapp/graph/model"
@@ -21,28 +19,21 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 	}
 
 	//Begin Transaction
-	tx, err := r.DB.Begin()
+	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		log.Errorf("Error opening transaction,%s", err)
 		return nil, err
 	}
-	defer tx.Rollback()
 
 	//Do insert record
-	stmt, err := tx.Prepare("INSERT INTO todos(text,userId,done) VALUES($1,$2,$3)")
-	if err != nil {
-		log.Errorf("Error preparing todo %s statement ,%s", todo, err)
-		return nil, err
-	}
-	defer stmt.Close()
-
-	if _, err := stmt.Exec(input.Text, input.UserID, false); err != nil {
-		log.Errorf("Error inserting todo %s,%s", todo, err)
+	if _, err := tx.NewInsert().Model(todo).Exec(ctx); err != nil {
+		log.Errorf("Error inserting todo %v,%s", todo, err)
 		return nil, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Errorf("Error committing todo %s,%s", todo, err)
+		log.Errorf("Error committing todo %v,%s", todo, err)
+		defer tx.Rollback()
 		return nil, err
 	}
 
@@ -50,141 +41,160 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 }
 
 func (r *mutationResolver) UpdateTodo(ctx context.Context, id string, text string, done bool) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented"))
+	todoID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+	todo := &model.Todo{
+		ID:   todoID,
+		Text: text,
+		Done: done,
+	}
+	//TODO transactions
+	if _, err := r.DB.NewDelete().Model(todo).WherePK().Exec(ctx); err != nil {
+		log.Errorf("Error updating todo %d,%s", todoID, err)
+		return nil, err
+	}
+
+	return todo, nil
 }
 
 func (r *mutationResolver) DeleteTodo(ctx context.Context, id string) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented"))
+	todoID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+	todo := &model.Todo{
+		ID: todoID,
+	}
+	if _, err := r.DB.NewDelete().Model(todo).WherePK().Exec(ctx); err != nil {
+		log.Errorf("Error deleting todo %d,%s", todoID, err)
+		return nil, err
+	}
+	return todo, nil
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	log.Println("Creating new user")
+	log.Printf("Creating new user %v", input)
 	user := &model.User{
-		Name: input.Name,
-		Sex:  input.Sex.String(),
+		Name:   input.Name,
+		Gender: input.Gender.String(),
 	}
 
 	//Begin Transaction
-	tx, err := r.DB.Begin()
+	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
-		log.Errorf("Error opening transaction for user %s ,%s", user, err)
+		log.Errorf("Error opening transaction for user %v insert,%s", user, err)
 		return nil, err
 	}
-	defer tx.Rollback()
 
 	//Do insert record
-	stmt, err := tx.Prepare("INSERT INTO users(name,sex) VALUES($1,$2)")
-	if err != nil {
-		log.Errorf("Error preparing statement for user %s ,%s", user, err)
-		return nil, err
-	}
-	defer stmt.Close()
-
-	if _, err := stmt.Exec(input.Name, input.Sex); err != nil {
+	if _, err := tx.NewInsert().Model(user).Exec(ctx); err != nil {
 		log.Errorf("Error inserting user %s", err)
-		return nil, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Errorf("Error committing user %s,%s", user, err)
+		log.Errorf("Error committing user %v,%s", user, err)
+		defer tx.Rollback()
 		return nil, err
 	}
 
 	return user, nil
 }
 
-func (r *queryResolver) AllTodos(ctx context.Context, last *int) ([]*model.Todo, error) {
-	log.Println("Resolve all todos")
-	var todos []*model.Todo
-	query := "SELECT id,text,done,userid FROM todos ORDER BY modifiedat"
-	if *last > 0 {
-		query = fmt.Sprintf("SELECT id,text,done,userid FROM todos ORDER BY modifiedat LIMIT %d", last)
-	}
-
-	rows, err := r.DB.Query(query)
+func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (*model.User, error) {
+	userID, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
 
-	for rows.Next() {
-		var todo model.Todo
-		if err := rows.Scan(&todo.ID, &todo.Text, &todo.Done, &todo.UserID); err == nil {
-			todos = append(todos, &todo)
-		}
+	user := &model.User{
+		ID: userID,
+	}
+
+	if _, err := r.DB.NewDelete().Model(user).WherePK().Exec(ctx); err != nil {
+		log.Errorf("Error deleting todo %d,%s", userID, err)
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *queryResolver) AllTodos(ctx context.Context, last *int) ([]*model.Todo, error) {
+	log.Println("Resolve all todos")
+	var todos []*model.Todo
+	var err error
+	if last != nil {
+		//TODO add ordering
+		err = r.DB.NewSelect().Model(&todos).Limit(*last).Scan(ctx)
+	} else {
+		err = r.DB.NewSelect().Model(&todos).Scan(ctx)
+	}
+
+	if err != nil {
+		log.Errorf("Error querying all todos, %s", err)
+		return nil, err
 	}
 
 	return todos, nil
 }
 
+func (r *queryResolver) Todo(ctx context.Context, id int) (*model.Todo, error) {
+	log.Printf("Querying for TODO with id %d", id)
+	todo := &model.Todo{
+		ID: id,
+	}
+
+	if _, err := r.DB.NewSelect().Model(todo).WherePK().Exec(ctx); err != nil {
+		log.Errorf("Error getting todo %d,%s", id, err)
+		return nil, err
+	}
+
+	return todo, nil
+}
+
 func (r *queryResolver) TodosByStatus(ctx context.Context, status *bool) ([]*model.Todo, error) {
 	log.Printf("Resolve todos by status %b\n", status)
 	var todos []*model.Todo
-	stmt, err := r.DB.Prepare("SELECT id,text,done,userid from todos where done=$1")
+	err := r.DB.NewSelect().Model(&todos).Where("status = ?", status).Scan(ctx)
 	if err != nil {
-		log.Errorf("Error preparing query for todos by status %b", status)
+		log.Errorf("Error querying for todos by status %b", status)
 		return nil, err
-	}
-	rows, err := stmt.Query(status)
-	if err != nil {
-		log.Errorf("Error querying todos with status %b", status)
-		return nil, err
-	}
-	for rows.Next() {
-		var todo model.Todo
-		if err := rows.Scan(&todo.ID, &todo.Text, &todo.Done, &todo.UserID); err == nil {
-			todos = append(todos, &todo)
-		}
 	}
 
 	return todos, nil
 }
 
 func (r *queryResolver) AllUsers(ctx context.Context, last *int) ([]*model.User, error) {
-	log.Println("Resolve users")
+	log.Print("Resolving all users")
 	var users []*model.User
-	query := "SELECT id,name,sex from users ORDER BY modifiedat"
-	if *last > 0 {
-		query = fmt.Sprintf("SELECT id,name,sex from users ORDER BY modifiedat LIMIT %d", last)
+	var err error
+	if last != nil {
+		//TODO add ordering
+		err = r.DB.NewSelect().Model(&users).Limit(*last).Scan(ctx)
+	} else {
+		err = r.DB.NewSelect().Model(&users).Scan(ctx)
 	}
-
-	rows, err := r.DB.Query(query)
 
 	if err != nil {
+		log.Errorf("Error querying all users, %s", err)
 		return nil, err
-	}
-
-	for rows.Next() {
-		var user model.User
-		if err := rows.Scan(&user.ID, &user.Name, &user.Sex); err == nil {
-			users = append(users, &user)
-		}
 	}
 
 	return users, nil
 }
 
-func (r *todoResolver) User(ctx context.Context, obj *model.Todo) (*model.User, error) {
-	log.Printf("Resolve user from todo,%s\n", obj)
-	var user model.User
-	stmt, err := r.DB.Prepare("SELECT id,name,sex from users where id=$1")
-	if err != nil {
-		log.Errorf("Error preaparing statement to query user %s", err)
+func (r *queryResolver) User(ctx context.Context, id int) (*model.User, error) {
+	log.Printf("Querying for User with id %d", id)
+	user := &model.User{
+		ID: id,
+	}
+
+	if _, err := r.DB.NewSelect().Model(user).WherePK().Exec(ctx); err != nil {
+		log.Errorf("Error getting user %d,%s", id, err)
 		return nil, err
 	}
 
-	rows, err := stmt.Query(obj.UserID)
-	if err != nil {
-		log.Errorf("Error while querying for users %s", err)
-		return nil, err
-	}
-	if err := rows.Scan(&user.ID, &user.Name, &user.Sex); err == nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-		log.Infof("No user found with id %s", obj.UserID)
-	}
-
-	return &user, nil
+	return user, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -193,9 +203,5 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-// Todo returns generated.TodoResolver implementation.
-func (r *Resolver) Todo() generated.TodoResolver { return &todoResolver{r} }
-
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type todoResolver struct{ *Resolver }

@@ -4,18 +4,44 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
-
+	"github.com/kameshsampath/blogapp/graph/model"
 	log "github.com/sirupsen/logrus"
-	"gocloud.dev/postgres"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/driver/sqliteshim"
+	"github.com/uptrace/bun/extra/bundebug"
+	"os"
 )
 
-//ConnectToDB creates the initial connection to the database
-func ConnectToDB() (*sql.DB, error) {
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", os.Getenv("PGUSER"), os.Getenv("PGPASSWORD"), os.Getenv("PGHOST"), os.Getenv("PGPORT"), os.Getenv("PGDATABASE"))
-	db, err := postgres.Open(context.TODO(), connStr)
+//InitDB creates the initial connection to the database and create the application tables
+func InitDB(dbFilePath string) (*bun.DB, error) {
+	sqlDB, err := sql.Open(sqliteshim.ShimName, fmt.Sprintf("file:%s?cached=shared", dbFilePath))
 	if err != nil {
 		log.Errorf("Error connecting to DB %s", err)
 	}
+
+	//Create the Database
+	db := bun.NewDB(sqlDB, sqlitedialect.New())
+	// BUNDEBUG=1 logs failed queries
+	// BUNDEBUG=2 logs all queries
+	db.AddQueryHook(bundebug.NewQueryHook(bundebug.FromEnv("BUNDEBUG")))
+	//Create Tables
+	//BUN_SCHEMA_GEN_MODE - drop-and-create or update
+	bunSchemGenMode := os.Getenv("BUN_SCHEMA_GEN_MODE")
+	if bunSchemGenMode == "drop-and-create" {
+		if _, err := db.NewDropTable().IfExists().Model((*model.User)(nil)).Exec(context.TODO()); err != nil {
+			log.Errorf("Unable to drop table user %s", err)
+		}
+		if _, err := db.NewDropTable().IfExists().Model((*model.Todo)(nil)).Exec(context.TODO()); err != nil {
+			log.Errorf("Unable to drop table todo %s", err)
+		}
+	}
+	if _, err := db.NewCreateTable().Model((*model.User)(nil)).Exec(context.TODO()); err != nil {
+		return nil, err
+	}
+	if _, err := db.NewCreateTable().Model((*model.Todo)(nil)).Exec(context.TODO()); err != nil {
+		return nil, err
+	}
+
 	return db, err
 }

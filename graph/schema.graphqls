@@ -12,23 +12,25 @@ type Todo {
 type User {
   id: ID!
   name: String!
-  sex: String!
+  gender: String!
 }
 
 type Query {
   allTodos(last: Int): [Todo!]!
+  todo(id:Int!): Todo
   todosByStatus(status: Boolean): [Todo!]!
   allUsers(last: Int): [User!]!
+  user(id:Int!): User
 }
 
 input NewTodo {
   text: String!
-  userId: String!
+  userId: Int!
 }
 
 input NewUser {
   name: String!
-  sex: Sex!
+  gender: Gender!
 }
 
 type Mutation {
@@ -36,9 +38,10 @@ type Mutation {
   updateTodo(id: ID!,text:String!,done:Boolean!):Todo!
   deleteTodo(id: ID!):Todo!
   createUser(input: NewUser!): User!
+  deleteUser(id: ID!): User!
 }
 
-enum Sex{
+enum Gender{
   MALE,
   FEMALE
 }

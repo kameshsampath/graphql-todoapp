@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 
 	log "github.com/sirupsen/logrus"
 
@@ -23,8 +24,23 @@ func main() {
 		port = defaultPort
 	}
 
-	//Connect to DB
-	d, err := db.ConnectToDB()
+	//Intialize the Database
+	dbFile, ok := os.LookupEnv("TODOS_DB_FILE")
+	if !ok {
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("Error getting current working directory %s", err)
+		}
+
+		err = os.MkdirAll(path.Join(cwd, "work"), os.ModeDir)
+		if err != nil {
+			log.Fatalf("Error making db directory %s", err)
+		}
+
+		dbFile = fmt.Sprintf("%s/todo.db", path.Join(cwd, "work"))
+	}
+
+	d, err := db.InitDB(dbFile)
 	defer d.Close()
 
 	if err != nil {

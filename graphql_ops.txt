@@ -1,0 +1,34 @@
+mutation{
+  createUser(input:{
+    name: "rithul",
+    gender: MALE
+  }){
+    name,
+    gender
+  }
+}
+
+query {
+  allUsers {
+    name
+    gender
+  }
+}
+
+mutation{
+  createTodo(input:{
+    text: "Task 1",
+    userId: 1
+  }){
+    text
+  }
+}
+
+query {
+  allTodos {
+    text,
+    user {
+      name
+    }
+  }
+}

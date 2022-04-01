@@ -1,10 +1,10 @@
-DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS users;
 CREATE TABLE IF NOT EXISTS users
 (
     id   SERIAL PRIMARY KEY,
     name text NOT NULL,
     sex varchar(6) NOT NULL,
-    modifiedAt timestamp default now()
+    modifiedAt timestamp default current_timestamp
 );
 DROP TABLE IF EXISTS todos;
 CREATE TABLE IF NOT EXISTS todos
@@ -13,9 +13,7 @@ CREATE TABLE IF NOT EXISTS todos
     text   text NOT NULL,
     done   bool default false,
     userId int  not null,
-    modifiedAt timestamp default now()
+    modifiedAt timestamp default current_timestamp,
+    foreign key (userId) references users(id)
 );
-
-ALTER TABLE todos DROP CONSTRAINT  IF EXISTS  fk_userid;
-ALTER TABLE todos ADD CONSTRAINT fk_userid FOREIGN KEY (userId) REFERENCES users (id);
 
