@@ -19,7 +19,7 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 		UserID: input.UserID,
 	}
 
-	if err := dao.InsertTodo(ctx, r.DB, todo); err != nil {
+	if err := dao.Insert(ctx, r.DB, todo); err != nil {
 		return nil, err
 	}
 
@@ -37,7 +37,7 @@ func (r *mutationResolver) UpdateTodo(ctx context.Context, id string, text strin
 		Done: done,
 	}
 
-	if err := dao.UpdateTodo(ctx, r.DB, todo); err != nil {
+	if err := dao.Update(ctx, r.DB, todo); err != nil {
 		return nil, err
 	}
 
@@ -53,7 +53,7 @@ func (r *mutationResolver) DeleteTodo(ctx context.Context, id string) (*model.To
 		ID: todoID,
 	}
 
-	if err := dao.DeleteTodo(ctx, r.DB, todo); err != nil {
+	if err := dao.Delete(ctx, r.DB, todo); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Gender: input.Gender.String(),
 	}
 
-	if err := dao.InsertUser(ctx, r.DB, user); err != nil {
+	if err := dao.Insert(ctx, r.DB, user); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +84,7 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (*model.Us
 		ID: userID,
 	}
 
-	if err := dao.DeleteUser(ctx, r.DB, user); err != nil {
+	if err := dao.Delete(ctx, r.DB, user); err != nil {
 		return nil, err
 	}
 
@@ -95,7 +95,7 @@ func (r *queryResolver) AllTodos(ctx context.Context, last *int) ([]*model.Todo,
 	log.Println("Resolve all todos")
 	var todos []*model.Todo
 
-	if err := dao.SelectTodos(ctx, r.DB, &todos, last); err != nil {
+	if err := dao.SelectAll(ctx, r.DB, &todos, last); err != nil {
 		return nil, err
 	}
 
@@ -108,7 +108,7 @@ func (r *queryResolver) Todo(ctx context.Context, id int) (*model.Todo, error) {
 		ID: id,
 	}
 
-	if err := dao.FindTodoByID(ctx, r.DB, todo); err != nil {
+	if err := dao.FindUserByPrimaryKey(ctx, r.DB, todo); err != nil {
 		return nil, err
 	}
 
@@ -131,7 +131,7 @@ func (r *queryResolver) AllUsers(ctx context.Context, last *int) ([]*model.User,
 	log.Print("Resolving all users")
 	var users []*model.User
 
-	if err := dao.SelectUsers(ctx, r.DB, &users, last); err != nil {
+	if err := dao.SelectAll(ctx, r.DB, &users, last); err != nil {
 		log.Errorf("Error querying all users, %s", err)
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (r *queryResolver) User(ctx context.Context, id int) (*model.User, error) {
 		ID: id,
 	}
 
-	if err := dao.FindUserByID(ctx, r.DB, user); err != nil {
+	if err := dao.FindUserByPrimaryKey(ctx, r.DB, user); err != nil {
 		return nil, err
 	}
 
@@ -160,7 +160,7 @@ func (r *todoResolver) Owner(ctx context.Context, obj *model.Todo) (*model.User,
 		ID: obj.UserID,
 	}
 
-	if err := dao.FindUserByID(ctx, r.DB, user); err != nil {
+	if err := dao.FindUserByPrimaryKey(ctx, r.DB, user); err != nil {
 		return nil, err
 	}
 
