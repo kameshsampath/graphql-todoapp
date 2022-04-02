@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"github.com/kameshsampath/blogapp/graph/dao"
 	"strconv"
 
 	"github.com/kameshsampath/blogapp/graph/generated"
@@ -18,22 +19,7 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 		UserID: input.UserID,
 	}
 
-	//Begin Transaction
-	tx, err := r.DB.BeginTx(ctx, nil)
-	if err != nil {
-		log.Errorf("Error opening transaction,%s", err)
-		return nil, err
-	}
-
-	//Do insert record
-	if _, err := tx.NewInsert().Model(todo).Exec(ctx); err != nil {
-		log.Errorf("Error inserting todo %v,%s", todo, err)
-		return nil, err
-	}
-
-	if err := tx.Commit(); err != nil {
-		log.Errorf("Error committing todo %v,%s", todo, err)
-		defer tx.Rollback()
+	if err := dao.InsertTodo(ctx, r.DB, todo); err != nil {
 		return nil, err
 	}
 
@@ -50,9 +36,8 @@ func (r *mutationResolver) UpdateTodo(ctx context.Context, id string, text strin
 		Text: text,
 		Done: done,
 	}
-	//TODO transactions
-	if _, err := r.DB.NewDelete().Model(todo).WherePK().Exec(ctx); err != nil {
-		log.Errorf("Error updating todo %d,%s", todoID, err)
+
+	if err := dao.UpdateTodo(ctx, r.DB, todo); err != nil {
 		return nil, err
 	}
 
@@ -67,10 +52,11 @@ func (r *mutationResolver) DeleteTodo(ctx context.Context, id string) (*model.To
 	todo := &model.Todo{
 		ID: todoID,
 	}
-	if _, err := r.DB.NewDelete().Model(todo).WherePK().Exec(ctx); err != nil {
-		log.Errorf("Error deleting todo %d,%s", todoID, err)
+
+	if err := dao.DeleteTodo(ctx, r.DB, todo); err != nil {
 		return nil, err
 	}
+
 	return todo, nil
 }
 
@@ -81,21 +67,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Gender: input.Gender.String(),
 	}
 
-	//Begin Transaction
-	tx, err := r.DB.BeginTx(ctx, nil)
-	if err != nil {
-		log.Errorf("Error opening transaction for user %v insert,%s", user, err)
-		return nil, err
-	}
-
-	//Do insert record
-	if _, err := tx.NewInsert().Model(user).Exec(ctx); err != nil {
-		log.Errorf("Error inserting user %s", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		log.Errorf("Error committing user %v,%s", user, err)
-		defer tx.Rollback()
+	if err := dao.InsertUser(ctx, r.DB, user); err != nil {
 		return nil, err
 	}
 
@@ -112,26 +84,18 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (*model.Us
 		ID: userID,
 	}
 
-	if _, err := r.DB.NewDelete().Model(user).WherePK().Exec(ctx); err != nil {
-		log.Errorf("Error deleting todo %d,%s", userID, err)
+	if err := dao.DeleteUser(ctx, r.DB, user); err != nil {
 		return nil, err
 	}
+
 	return user, nil
 }
 
 func (r *queryResolver) AllTodos(ctx context.Context, last *int) ([]*model.Todo, error) {
 	log.Println("Resolve all todos")
 	var todos []*model.Todo
-	var err error
-	if last != nil {
-		//TODO add ordering
-		err = r.DB.NewSelect().Model(&todos).Limit(*last).Scan(ctx)
-	} else {
-		err = r.DB.NewSelect().Model(&todos).Scan(ctx)
-	}
 
-	if err != nil {
-		log.Errorf("Error querying all todos, %s", err)
+	if err := dao.SelectTodos(ctx, r.DB, &todos, last); err != nil {
 		return nil, err
 	}
 
@@ -144,8 +108,7 @@ func (r *queryResolver) Todo(ctx context.Context, id int) (*model.Todo, error) {
 		ID: id,
 	}
 
-	if _, err := r.DB.NewSelect().Model(todo).WherePK().Exec(ctx); err != nil {
-		log.Errorf("Error getting todo %d,%s", id, err)
+	if err := dao.FindTodoByID(ctx, r.DB, todo); err != nil {
 		return nil, err
 	}
 
@@ -155,8 +118,8 @@ func (r *queryResolver) Todo(ctx context.Context, id int) (*model.Todo, error) {
 func (r *queryResolver) TodosByStatus(ctx context.Context, status *bool) ([]*model.Todo, error) {
 	log.Printf("Resolve todos by status %b\n", status)
 	var todos []*model.Todo
-	err := r.DB.NewSelect().Model(&todos).Where("status = ?", status).Scan(ctx)
-	if err != nil {
+
+	if err := dao.FindTodosByStatus(ctx, r.DB, &todos, status); err != nil {
 		log.Errorf("Error querying for todos by status %b", status)
 		return nil, err
 	}
@@ -167,18 +130,13 @@ func (r *queryResolver) TodosByStatus(ctx context.Context, status *bool) ([]*mod
 func (r *queryResolver) AllUsers(ctx context.Context, last *int) ([]*model.User, error) {
 	log.Print("Resolving all users")
 	var users []*model.User
-	var err error
-	if last != nil {
-		//TODO add ordering
-		err = r.DB.NewSelect().Model(&users).Limit(*last).Scan(ctx)
-	} else {
-		err = r.DB.NewSelect().Model(&users).Scan(ctx)
-	}
 
-	if err != nil {
+	if err := dao.SelectUsers(ctx, r.DB, &users, last); err != nil {
 		log.Errorf("Error querying all users, %s", err)
 		return nil, err
 	}
+
+	log.Printf("Users %v", users)
 
 	return users, nil
 }
@@ -189,8 +147,7 @@ func (r *queryResolver) User(ctx context.Context, id int) (*model.User, error) {
 		ID: id,
 	}
 
-	if _, err := r.DB.NewSelect().Model(user).WherePK().Exec(ctx); err != nil {
-		log.Errorf("Error getting user %d,%s", id, err)
+	if err := dao.FindUserByID(ctx, r.DB, user); err != nil {
 		return nil, err
 	}
 
