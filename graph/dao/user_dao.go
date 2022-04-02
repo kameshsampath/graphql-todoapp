@@ -84,7 +84,7 @@ func SelectUsers(ctx context.Context, db *bun.DB, users *[]*model.User, last *in
 
 //FindUserByID find the user by its primary key
 func FindUserByID(ctx context.Context, db *bun.DB, user *model.User) error {
-	if err := db.NewSelect().WherePK().Model(user).Scan(ctx); err != nil {
+	if err := db.NewSelect().Model(user).WherePK().Scan(ctx); err != nil {
 		log.Errorf("Error getting user with id %d, %s", user.ID, err)
 		return err
 	}

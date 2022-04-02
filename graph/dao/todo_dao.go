@@ -85,7 +85,7 @@ func SelectTodos(ctx context.Context, db *bun.DB, todos *[]*model.Todo, last *in
 
 //FindTodoByID find the todo by its primary key
 func FindTodoByID(ctx context.Context, db *bun.DB, todo *model.Todo) error {
-	if err := db.NewSelect().WherePK().Model(todo).Scan(ctx); err != nil {
+	if err := db.NewSelect().Model(todo).WherePK().Scan(ctx); err != nil {
 		log.Errorf("Error getting user with id %d, %s", todo.ID, err)
 		return err
 	}

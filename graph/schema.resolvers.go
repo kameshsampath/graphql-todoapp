@@ -5,9 +5,9 @@ package graph
 
 import (
 	"context"
-	"github.com/kameshsampath/blogapp/graph/dao"
 	"strconv"
 
+	"github.com/kameshsampath/blogapp/graph/dao"
 	"github.com/kameshsampath/blogapp/graph/generated"
 	"github.com/kameshsampath/blogapp/graph/model"
 	log "github.com/sirupsen/logrus"
@@ -154,11 +154,28 @@ func (r *queryResolver) User(ctx context.Context, id int) (*model.User, error) {
 	return user, nil
 }
 
+func (r *todoResolver) Owner(ctx context.Context, obj *model.Todo) (*model.User, error) {
+	log.Printf("Resolving for User for todo %v", obj)
+	user := &model.User{
+		ID: obj.UserID,
+	}
+
+	if err := dao.FindUserByID(ctx, r.DB, user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Todo returns generated.TodoResolver implementation.
+func (r *Resolver) Todo() generated.TodoResolver { return &todoResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type todoResolver struct{ *Resolver }
