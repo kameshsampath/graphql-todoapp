@@ -35,12 +35,13 @@ func InitDB(dbFilePath string) (*bun.DB, error) {
 		if _, err := db.NewDropTable().IfExists().Model((*model.Todo)(nil)).Exec(context.TODO()); err != nil {
 			log.Errorf("Unable to drop table todo %s", err)
 		}
-		if _, err := db.NewCreateTable().Model((*model.User)(nil)).Exec(context.TODO()); err != nil {
-			return nil, err
-		}
-		if _, err := db.NewCreateTable().Model((*model.Todo)(nil)).Exec(context.TODO()); err != nil {
-			return nil, err
-		}
+	}
+
+	if _, err := db.NewCreateTable().IfNotExists().Model((*model.User)(nil)).Exec(context.TODO()); err != nil {
+		return nil, err
+	}
+	if _, err := db.NewCreateTable().IfNotExists().Model((*model.Todo)(nil)).Exec(context.TODO()); err != nil {
+		return nil, err
 	}
 
 	return db, err
