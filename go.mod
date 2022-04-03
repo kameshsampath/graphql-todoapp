@@ -1,4 +1,4 @@
-module github.com/kameshsampath/blogapp
+module github.com/kameshsampath/graphql-todoapp
 
 go 1.18
 
