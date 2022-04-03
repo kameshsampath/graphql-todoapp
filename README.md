@@ -1,6 +1,6 @@
 # TODO App
 
-A simple TODO app to practice [GraphQL](https://graphql.org/) using [go][https://golang.org]. The app can be run with the following databases,
+A simple TODO app to practice [GraphQL](https://graphql.org/) using [go](https://golang.org). The app can be run with the following databases,
 
 - Postgresql
 - Mariadb/MySql
