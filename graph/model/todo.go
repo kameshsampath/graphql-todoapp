@@ -13,7 +13,7 @@ type Todo struct {
 	bun.BaseModel `bun:"table: todos,alias:t"`
 	ID            int       `bun:",pk,autoincrement" json:"id"`
 	Text          string    `bun:"text,notnull" json:"text"`
-	Done          bool      `bun:"done,notnull,default:'false'" json:"done"`
+	Done          bool      `bun:"done,notnull,default: '0'" json:"done"`
 	UserID        int       `bun:"user_id,notnull" json:"user"`
 	User          *User     `bun:"rel:belongs-to,join:user_id=id"`
 	CreatedAt     time.Time `bun:"created_at,notnull" json:"-"`

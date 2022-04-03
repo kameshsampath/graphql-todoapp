@@ -39,7 +39,7 @@ func Update[T any](ctx context.Context, db *bun.DB, t *T) error {
 	}
 
 	//Do Update record
-	if _, err := tx.NewUpdate().Model(t).Exec(ctx); err != nil {
+	if _, err := tx.NewUpdate().Model(t).WherePK().Exec(ctx); err != nil {
 		log.Errorf("Error inserting %v %s", t, err)
 	}
 
@@ -62,7 +62,7 @@ func Delete[T any](ctx context.Context, db *bun.DB, t *T) error {
 	}
 
 	//Do Delete record
-	if _, err := tx.NewDelete().Model(t).Exec(ctx); err != nil {
+	if _, err := tx.NewDelete().Model(t).WherePK().Exec(ctx); err != nil {
 		log.Errorf("Error inserting %v %s", t, err)
 	}
 

@@ -1,34 +1,83 @@
-mutation{
+mutation {
   createUser(input:{
-    name: "rithul",
-    gender: MALE
+    name: "mini"
+    gender: FEMALE
   }){
     name,
     gender
   }
 }
 
-query {
-  allUsers {
-    name
-    gender
-  }
-}
-
-mutation{
+mutation {
   createTodo(input:{
     text: "Task 1",
     userId: 1
   }){
-    text
+    text,
+  }
+}
+
+mutation {
+  createTodo(input:{
+    text: "Task 2",
+    userId: 1
+  }){
+    text,
+  }
+}
+
+mutation {
+  createTodo(input:{
+    text: "Task 3",
+    userId: 2
+  }){
+    text,
+  }
+}
+
+mutation {
+  createTodo(input:{
+    text: "Task 4",
+    userId: 2
+  }){
+    text,
   }
 }
 
 query {
-  allTodos {
+  allUsers{
+    id,
+    name
+  }
+}
+
+mutation {
+  deleteUser(id:2){name}
+}
+
+query {
+  allTodos{
     text,
-    user {
+    done,
+    owner{
       name
     }
+  }
+}
+
+query{
+  todosByStatus(status: false){
+    text,
+    owner{
+      name
+    }
+  }
+}
+
+mutation {
+  updateTodo(id: 4,text: "Task 4",done: true){
+    id,
+    text,
+    done
   }
 }

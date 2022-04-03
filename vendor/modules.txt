@@ -33,6 +33,9 @@ github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/fatih/color v1.13.0
 ## explicit; go 1.13
 github.com/fatih/color
+# github.com/go-sql-driver/mysql v1.6.0
+## explicit; go 1.10
+github.com/go-sql-driver/mysql
 # github.com/google/go-cmp v0.5.6
 ## explicit; go 1.8
 # github.com/google/uuid v1.3.0
@@ -92,9 +95,18 @@ github.com/uptrace/bun/internal
 github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/schema
+# github.com/uptrace/bun/dialect/mysqldialect v1.1.3
+## explicit; go 1.17
+github.com/uptrace/bun/dialect/mysqldialect
+# github.com/uptrace/bun/dialect/pgdialect v1.1.3
+## explicit; go 1.17
+github.com/uptrace/bun/dialect/pgdialect
 # github.com/uptrace/bun/dialect/sqlitedialect v1.1.3
 ## explicit; go 1.17
 github.com/uptrace/bun/dialect/sqlitedialect
+# github.com/uptrace/bun/driver/pgdriver v1.1.3
+## explicit; go 1.17
+github.com/uptrace/bun/driver/pgdriver
 # github.com/uptrace/bun/driver/sqliteshim v1.1.3
 ## explicit; go 1.17
 github.com/uptrace/bun/driver/sqliteshim
@@ -122,6 +134,9 @@ github.com/vmihailenco/msgpack/v5/msgpcode
 github.com/vmihailenco/tagparser/v2
 github.com/vmihailenco/tagparser/v2/internal
 github.com/vmihailenco/tagparser/v2/internal/parser
+# golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064
+## explicit; go 1.17
+golang.org/x/crypto/pbkdf2
 # golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 ## explicit; go 1.17
 golang.org/x/mod/internal/lazyregexp
@@ -167,6 +182,9 @@ gopkg.in/yaml.v2
 # lukechampine.com/uint128 v1.2.0
 ## explicit; go 1.12
 lukechampine.com/uint128
+# mellium.im/sasl v0.2.1
+## explicit
+mellium.im/sasl
 # modernc.org/cc/v3 v3.35.24
 ## explicit; go 1.15
 modernc.org/cc/v3

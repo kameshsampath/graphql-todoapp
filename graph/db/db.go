@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"github.com/uptrace/bun"
 	"os"
 )
@@ -16,9 +15,9 @@ func NewDB() (DataSource, error) {
 	dbType := os.Getenv("TODO_DB_TYPE")
 	switch dbType {
 	case "postgresql":
-		panic(fmt.Sprintf("postgresql not yet supported"))
-	case "mysql":
-		panic(fmt.Sprintf("mysql not yet supported"))
+		return newPostgresqlDataSource()
+	case "mariadb", "mysql":
+		return newMariadbDataSource()
 	default:
 		return newSqlliteDataSource()
 	}
